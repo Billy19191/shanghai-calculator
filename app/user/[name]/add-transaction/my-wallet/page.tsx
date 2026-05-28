@@ -7,7 +7,7 @@ import { createExpenseAction } from '@/app/actions'
 const listOfPeople: string[] = [
   'Grace',
   'Bam',
-  'Mew',
+  'Miw',
   'Nonny',
   'Putter',
   'Golf',

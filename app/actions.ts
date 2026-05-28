@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 const listOfPeople = [
   'Grace',
   'Bam',
-  'Mew',
+  'Miw',
   'Nonny',
   'Putter',
   'Golf',

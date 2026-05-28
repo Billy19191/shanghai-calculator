@@ -129,10 +129,14 @@ function ExpenseGroupList({
           )
         })}
       </div>
-      {checkable && selectedExpenses.length > 0 && (
+      {checkable && (
         <button
           onClick={handleConfirm}
-          className="mt-6 w-full bg-blue-500 text-white font-bold py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          disabled={selectedExpenses.length === 0}
+          className={`mt-6 w-full font-bold py-2 rounded-lg transition-colors ${selectedExpenses.length > 0
+            ? 'bg-black text-white'
+            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
         >
           Confirm Paid ({selectedExpenses.length})
         </button>

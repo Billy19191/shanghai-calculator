@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 const listOfPeople: string[] = [
   'Grace',
   'Bam',
-  'Mew',
+  'Miw',
   'Nonny',
   'Putter',
   'Golf',
