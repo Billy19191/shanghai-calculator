@@ -14,10 +14,10 @@ export default function AddTransactionPage({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
-      <h1 className="text-3xl font-bold mb-8">
-        Add Transaction for {decodeURIComponent(name)}
+      <h1 className="text-3xl font-bold mb-8 text-center">
+        Add Transaction
       </h1>
-      <h2 className="text-xl mb-4 text-gray-600">Select payment method</h2>
+      <h2 className="text-md mb-4 text-gray-600">Select payment method</h2>
 
       <Card
         name="1. Pay with my wallet"
@@ -27,8 +27,8 @@ export default function AddTransactionPage({
         name="2. Pay with shared wallet"
         onClick={() => router.push(`/user/${name}/add-transaction/shared-wallet`)}
       />
-      
-      <button 
+
+      <button
         className="mt-8 text-blue-500 hover:underline"
         onClick={() => router.back()}
       >

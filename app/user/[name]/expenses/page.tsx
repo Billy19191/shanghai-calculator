@@ -73,7 +73,7 @@ function ExpenseGroupList({
             <div key={group.person} className="flex flex-col">
               <div className="flex justify-between font-bold text-lg border-b border-gray-200 pb-1 mb-3">
                 <span>{group.person}</span>
-                <span>{personTotal} USD</span>
+                <span>{personTotal} THB</span>
               </div>
 
               <div className="flex flex-col gap-4">
@@ -105,7 +105,7 @@ function ExpenseGroupList({
                               <div className="flex justify-between w-full">
                                 <span>{expense.name}</span>
                                 <span className="font-medium">
-                                  {expense.amount} USD
+                                  {expense.amount} THB
                                 </span>
                               </div>
                             </label>
@@ -116,7 +116,7 @@ function ExpenseGroupList({
                             >
                               <span>{expense.name}</span>
                               <span className="font-medium">
-                                {expense.amount} USD
+                                {expense.amount} THB
                               </span>
                             </div>
                           ),
@@ -216,11 +216,11 @@ export default function ViewExpensesPage({
       <div className="flex flex-col items-center gap-1 text-gray-500 mb-8 w-full border-b border-gray-200 pb-6">
         <p>
           Total to pay:{' '}
-          <span className="font-bold text-red-500">{totalExpense} USD</span>
+          <span className="font-bold text-red-500">{totalExpense} THB</span>
         </p>
         <p>
           Total owed to me:{' '}
-          <span className="font-bold text-green-500">{totalOwesMe} USD</span>
+          <span className="font-bold text-green-500">{totalOwesMe} THB</span>
         </p>
       </div>
 

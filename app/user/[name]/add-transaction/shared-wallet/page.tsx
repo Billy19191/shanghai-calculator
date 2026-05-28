@@ -7,7 +7,7 @@ import { createExpenseAction } from '@/app/actions'
 const listOfPeople: string[] = [
   'Grace',
   'Bam',
-  'New',
+  'Mew',
   'Nonny',
   'Putter',
   'Golf',
@@ -37,6 +37,14 @@ export default function SharedWalletTransactionPage({
     )
   }
 
+  const handleSelectAll = () => {
+    if (selectedPeople.length === listOfPeople.length) {
+      setSelectedPeople([])
+    } else {
+      setSelectedPeople([...listOfPeople])
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -61,13 +69,23 @@ export default function SharedWalletTransactionPage({
     })
   }
 
+  const perPerson =
+    selectedPeople.length > 0 && amount
+      ? (parseFloat(amount) / selectedPeople.length).toFixed(2)
+      : null
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-10 px-5 my-5 max-w-lg mx-auto w-full">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        Shared Wallet Expense
-      </h1>
+      <h1 className="text-3xl font-bold mb-2">Shared Wallet Expense</h1>
+      <h2 className="text-md mb-8 text-gray-600">
+        Paying from the shared pool
+      </h2>
 
-      <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-lg flex flex-col gap-6"
+      >
+        {/* Expense Name */}
         <div className="flex flex-col gap-2">
           <label htmlFor="expenseName" className="font-semibold text-lg">
             Expense Name
@@ -77,12 +95,13 @@ export default function SharedWalletTransactionPage({
             type="text"
             value={expenseName}
             onChange={(e) => setExpenseName(e.target.value)}
-            className="border border-gray-300 rounded-lg p-3 text-lg"
+            className="border border-gray-300 rounded-lg p-3 text-lg focus:outline-none focus:border-gray-500 transition-colors"
             placeholder="e.g. Dinner, Taxi"
             required
           />
         </div>
 
+        {/* Amount */}
         <div className="flex flex-col gap-2">
           <label htmlFor="amount" className="font-semibold text-lg">
             Total Amount
@@ -92,38 +111,63 @@ export default function SharedWalletTransactionPage({
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="border border-gray-300 rounded-lg p-3 text-lg"
+            className="border border-gray-300 rounded-lg p-3 text-lg focus:outline-none focus:border-gray-500 transition-colors"
             placeholder="e.g. 500"
             required
           />
         </div>
 
+        {/* People Selector */}
         <div className="flex flex-col gap-2">
-          <label className="font-semibold text-lg">
-            Select people to share with
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="font-semibold text-lg">
+              Select people to share with
+            </label>
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="text-sm text-blue-500 hover:underline"
+            >
+              {selectedPeople.length === listOfPeople.length
+                ? 'Deselect all'
+                : 'Select all'}
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
-            {listOfPeople.map((person) => (
-              <button
-                key={person}
-                type="button"
-                onClick={() => handlePersonToggle(person)}
-                className={`px-4 py-2 rounded-full border transition-colors ${
-                  selectedPeople.includes(person)
-                    ? 'bg-blue-600 text-white border-blue-600'
+            {listOfPeople.map((person) => {
+              const isSelected = selectedPeople.includes(person)
+              return (
+                <button
+                  key={person}
+                  type="button"
+                  onClick={() => handlePersonToggle(person)}
+                  className={`px-4 py-2 rounded-full border transition-colors ${isSelected
+                    ? 'bg-black text-white border-black'
                     : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                }`}
-              >
-                {person}
-              </button>
-            ))}
+                    }`}
+                >
+                  {person}
+                </button>
+              )
+            })}
           </div>
         </div>
 
+        {/* Per-person summary */}
+        {perPerson && (
+          <div className="border border-gray-300 rounded-lg p-4 flex justify-between items-center">
+            <span className="text-gray-600">
+              Per person ({selectedPeople.length} people)
+            </span>
+            <span className="font-bold text-lg">฿{perPerson}</span>
+          </div>
+        )}
+
+        {/* Submit */}
         <button
           type="submit"
-          disabled={isPending}
-          className="mt-6 bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600 transition-colors text-lg disabled:opacity-50"
+          disabled={isPending || selectedPeople.length === 0}
+          className="mt-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : 'Submit Expense'}
         </button>

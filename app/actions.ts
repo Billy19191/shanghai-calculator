@@ -1,12 +1,12 @@
 'use server'
 
-import prisma from '@/lib/prisma'
+import supabase from '@/lib/supabase'
 import { revalidatePath } from 'next/cache'
 
 const listOfPeople = [
   'Grace',
   'Bam',
-  'New',
+  'Mew',
   'Nonny',
   'Putter',
   'Golf',
@@ -16,11 +16,15 @@ const listOfPeople = [
 
 // Ensure database is seeded with users
 export async function seedUsers() {
-  const count = await prisma.user.count()
+  const { count } = await supabase
+    .from('User')
+    .select('*', { count: 'exact', head: true })
+
   if (count === 0) {
-    await prisma.user.createMany({
-      data: listOfPeople.map((name) => ({ name })),
-    })
+    const { error } = await supabase
+      .from('User')
+      .insert(listOfPeople.map((name) => ({ name })))
+    if (error) throw new Error(`Failed to seed users: ${error.message}`)
   }
 }
 
@@ -32,33 +36,47 @@ export async function createExpenseAction(
 ) {
   await seedUsers()
 
-  const payer = await prisma.user.findUnique({ where: { name: payerName } })
-  if (!payer) throw new Error('Payer not found')
+  const { data: payer, error: payerError } = await supabase
+    .from('User')
+    .select('*')
+    .eq('name', payerName)
+    .single()
+
+  if (payerError || !payer) throw new Error('Payer not found')
 
   const splitAmount = amount / sharedWithNames.length
 
-  const shareUsers = await prisma.user.findMany({
-    where: { name: { in: sharedWithNames } },
-  })
+  const { data: shareUsers, error: shareUsersError } = await supabase
+    .from('User')
+    .select('*')
+    .in('name', sharedWithNames)
+
+  if (shareUsersError) throw new Error(`Failed to find users: ${shareUsersError.message}`)
+
+  // Create the expense first
+  const { data: expense, error: expenseError } = await supabase
+    .from('Expense')
+    .insert({ name, amount, payerId: payer.id })
+    .select()
+    .single()
+
+  if (expenseError || !expense) throw new Error(`Failed to create expense: ${expenseError?.message}`)
 
   // People only owe the payer if they aren't the payer
-  const sharesData = shareUsers
+  const sharesData = (shareUsers || [])
     .filter((u) => u.name !== payerName)
     .map((u) => ({
+      expenseId: expense.id,
       userId: u.id,
       amountOwed: splitAmount,
     }))
 
-  await prisma.expense.create({
-    data: {
-      name,
-      amount,
-      payerId: payer.id,
-      shares: {
-        create: sharesData,
-      },
-    },
-  })
+  if (sharesData.length > 0) {
+    const { error: sharesError } = await supabase
+      .from('ExpenseShare')
+      .insert(sharesData)
+    if (sharesError) throw new Error(`Failed to create shares: ${sharesError.message}`)
+  }
 
   revalidatePath(`/user/${payerName}/expenses`)
 }
@@ -66,32 +84,55 @@ export async function createExpenseAction(
 export async function getUserExpenses(userName: string) {
   await seedUsers()
 
-  const user = await prisma.user.findUnique({ where: { name: userName } })
-  if (!user) return { owedExpenses: [], owningMeExpenses: [] }
+  const { data: user, error: userError } = await supabase
+    .from('User')
+    .select('*')
+    .eq('name', userName)
+    .single()
+
+  if (userError || !user) return { owedExpenses: [], owningMeExpenses: [] }
 
   // 1. Expenses this user needs to pay (they are in the shares, someone else is the payer)
-  const owedShares = await prisma.expenseShare.findMany({
-    where: { userId: user.id, isPaid: false },
-    include: {
-      expense: { include: { payer: true } },
-    },
-  })
+  const { data: owedShares } = await supabase
+    .from('ExpenseShare')
+    .select(`
+      id,
+      amountOwed,
+      isPaid,
+      expense:Expense (
+        id,
+        name,
+        amount,
+        date,
+        payer:User!payerId (
+          id,
+          name
+        )
+      )
+    `)
+    .eq('userId', user.id)
+    .eq('isPaid', false)
 
-  // Format conceptually to grouped array
+  // Format to grouped array
   const owedMap: Record<
     string,
     { id: number; name: string; amount: number; date: string }[]
   > = {}
-  for (const share of owedShares) {
-    const payerName = share.expense.payer.name
+
+  for (const share of owedShares || []) {
+    // Supabase returns nested relations as objects
+    const expense = share.expense as unknown as {
+      id: number; name: string; amount: number; date: string;
+      payer: { id: number; name: string }
+    }
+    const payerName = expense.payer.name
     if (!owedMap[payerName]) owedMap[payerName] = []
 
-    // Use ISO string for the date to transfer cleanly over Server Actions
     owedMap[payerName].push({
       id: share.id,
-      name: share.expense.name,
+      name: expense.name,
       amount: share.amountOwed,
-      date: share.expense.date.toISOString(),
+      date: expense.date,
     })
   }
 
@@ -101,27 +142,50 @@ export async function getUserExpenses(userName: string) {
   }))
 
   // 2. Expenses others owe this user (they are the payer)
-  const owningMeShares = await prisma.expenseShare.findMany({
-    where: { expense: { payerId: user.id }, isPaid: false },
-    include: {
-      expense: true,
-      user: true,
-    },
+  const { data: owningMeShares } = await supabase
+    .from('ExpenseShare')
+    .select(`
+      id,
+      amountOwed,
+      isPaid,
+      expense:Expense (
+        id,
+        name,
+        amount,
+        date,
+        payerId
+      ),
+      user:User!userId (
+        id,
+        name
+      )
+    `)
+    .eq('isPaid', false)
+
+  // Filter server-side: only shares where the expense payer is this user
+  const filteredOwningMe = (owningMeShares || []).filter((share) => {
+    const expense = share.expense as unknown as { payerId: number }
+    return expense.payerId === user.id
   })
 
   const owningMap: Record<
     string,
     { id: number; name: string; amount: number; date: string }[]
   > = {}
-  for (const share of owningMeShares) {
-    const debtorName = share.user.name
+
+  for (const share of filteredOwningMe) {
+    const expense = share.expense as unknown as {
+      id: number; name: string; amount: number; date: string
+    }
+    const debtor = share.user as unknown as { id: number; name: string }
+    const debtorName = debtor.name
     if (!owningMap[debtorName]) owningMap[debtorName] = []
 
     owningMap[debtorName].push({
       id: share.id,
-      name: share.expense.name,
+      name: expense.name,
       amount: share.amountOwed,
-      date: share.expense.date.toISOString(),
+      date: expense.date,
     })
   }
 
@@ -136,10 +200,12 @@ export async function getUserExpenses(userName: string) {
 }
 
 export async function confirmSharesPaid(shareIds: number[], userName: string) {
-  await prisma.expenseShare.updateMany({
-    where: { id: { in: shareIds } },
-    data: { isPaid: true },
-  })
+  const { error } = await supabase
+    .from('ExpenseShare')
+    .update({ isPaid: true })
+    .in('id', shareIds)
+
+  if (error) throw new Error(`Failed to confirm paid: ${error.message}`)
 
   revalidatePath(`/user/${userName}/expenses`)
 }

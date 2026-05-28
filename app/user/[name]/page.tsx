@@ -1,6 +1,6 @@
 'use client'
 
-import React, { use } from 'react'
+import { use } from 'react'
 import Card from '@/app/components/card'
 import { useRouter } from 'next/navigation'
 
@@ -17,7 +17,7 @@ export default function UserMenuPage({
       <h1 className="text-3xl font-bold mb-8">
         Hello, {decodeURIComponent(name)}!
       </h1>
-      <h2 className="text-xl mb-4 text-gray-600">What would you like to do?</h2>
+      <h2 className="text-md mb-4 text-gray-600">What would you like to do?</h2>
 
       <Card
         name="1. Add transaction"
@@ -32,7 +32,7 @@ export default function UserMenuPage({
         className="mt-8 text-blue-500 hover:underline"
         onClick={() => router.push('/')}
       >
-        Go back to Home
+        Go back
       </button>
     </div>
   )
