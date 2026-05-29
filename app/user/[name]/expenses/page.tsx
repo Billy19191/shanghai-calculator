@@ -213,7 +213,7 @@ export default function ViewExpensesPage({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-10 px-5 max-w-md mx-auto w-full">
+    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-5 max-w-md mx-auto w-full">
       <h1 className="text-3xl font-bold mb-2 text-center">
         {decodeURIComponent(name)}&apos;s Expenses
       </h1>

@@ -14,7 +14,7 @@ export default function UserMenuPage({
 
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
+    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
       <h1 className="text-3xl font-bold mb-8">
         Hello, {decodeURIComponent(name)}!
       </h1>
