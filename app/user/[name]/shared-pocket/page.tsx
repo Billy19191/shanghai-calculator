@@ -60,7 +60,7 @@ export default function TopUpPocketPage({
     startTransition(async () => {
       try {
         await topUpPocket(selectedPerson, parseFloat(amount), description)
-        alert(`Topped up ${amount} THB by ${selectedPerson}`)
+        alert(`Topped up ${parseFloat(amount).toFixed(2)} THB by ${selectedPerson}`)
         setAmount('')
         setDescription('')
         loadData()
@@ -76,19 +76,19 @@ export default function TopUpPocketPage({
       <h1 className="text-3xl font-bold mb-2">Top Up Pocket</h1>
 
       {/* Current Balance */}
-      <div className="w-full border border-gray-200 rounded-lg p-4 mb-6 text-center">
+      <div className="w-full border border-gray-200 rounded-lg p-4 mt-4 mb-6 text-center">
         <p className="text-sm text-gray-500">Current Balance</p>
         <p
           className={`text-2xl font-bold mt-1 ${balance !== null && balance >= 0 ? 'text-green-500' : 'text-red-500'}`}
         >
-          {balance !== null ? `${balance.toLocaleString()} THB` : '...'}
+          {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} THB` : '...'}
         </p>
       </div>
 
       {/* Personal Shared Balances */}
       {personalBalances.length > 0 && (
         <div className="w-full border border-gray-200 rounded-lg p-4 mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 mb-3 text-center uppercase tracking-wider">
+          <h2 className="text-sm  text-gray-500 mb-3 text-center">
             Personal Shared Balances
           </h2>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -99,7 +99,7 @@ export default function TopUpPocketPage({
                   className={`font-semibold ${pb.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
                   {pb.balance >= 0 ? '+' : ''}
-                  {pb.balance.toLocaleString()} THB
+                  {pb.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} THB
                 </span>
               </div>
             ))}
@@ -147,6 +147,8 @@ export default function TopUpPocketPage({
             onChange={(e) => setAmount(e.target.value)}
             className="border border-gray-300 rounded-lg p-3 text-lg focus:outline-none focus:border-gray-500 transition-colors"
             placeholder="e.g. 1000"
+            min="0.01"
+            step="0.01"
             required
           />
         </div>
@@ -169,7 +171,7 @@ export default function TopUpPocketPage({
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending || !amount}
+          disabled={isPending || !amount || parseFloat(amount) <= 0}
           className="mt-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : 'Top Up'}
@@ -204,7 +206,7 @@ export default function TopUpPocketPage({
                   className={`font-bold ${t.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}
                 >
                   {t.amount >= 0 ? '+' : ''}
-                  {t.amount.toLocaleString()} THB
+                  {t.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} THB
                 </span>
               </div>
             ))}

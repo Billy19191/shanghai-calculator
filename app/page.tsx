@@ -49,7 +49,7 @@ export default function Home() {
         >
           <span>Shared Pocket</span>
           <span className={`block text-sm mt-1 ${pocketBalance !== null && pocketBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {pocketBalance !== null ? `${pocketBalance.toLocaleString()} THB` : '...'}
+            {pocketBalance !== null ? `${pocketBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} THB` : '...'}
           </span>
         </Link>
       </div>

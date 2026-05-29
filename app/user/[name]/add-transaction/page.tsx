@@ -77,13 +77,13 @@ export default function MyWalletTransactionPage({
   }
 
   const perPerson =
-    selectedPeople.length > 0 && amount
+    selectedPeople.length > 0 && amount && parseFloat(amount) > 0
       ? (parseFloat(amount) / selectedPeople.length).toFixed(2)
       : null
 
   return (
     <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-5 my-5 max-w-lg mx-auto w-full">
-      <h1 className="text-3xl font-bold mb-2">Add Expense</h1>
+      <h1 className="text-3xl font-bold mb-2">Add New Expense</h1>
       <h2 className="text-md mb-8 text-gray-600">
         Paying from {decodeURIComponent(name)}&apos;s wallet
       </h2>
@@ -111,7 +111,7 @@ export default function MyWalletTransactionPage({
         {/* Amount */}
         <div className="flex flex-col gap-2">
           <label htmlFor="amount" className="font-semibold text-lg">
-            Total Amount
+            Total Amount (THB)
           </label>
           <input
             id="amount"
@@ -120,6 +120,8 @@ export default function MyWalletTransactionPage({
             onChange={(e) => setAmount(e.target.value)}
             className="border border-gray-300 rounded-lg p-3 text-lg focus:outline-none focus:border-gray-500 transition-colors"
             placeholder="e.g. 500"
+            min="0.01"
+            step="0.01"
             required
           />
         </div>
@@ -173,10 +175,10 @@ export default function MyWalletTransactionPage({
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending || !expenseName.trim() || !amount || selectedPeople.length === 0}
+          disabled={isPending || !expenseName.trim() || !amount || parseFloat(amount) <= 0 || selectedPeople.length === 0}
           className="mt-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : 'Submit Expense'}
+          {isPending ? 'Submitting...' : 'Add Expense'}
         </button>
       </form>
 

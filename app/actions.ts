@@ -47,7 +47,8 @@ export async function createExpenseAction(
 
   if (payerError || !payer) throw new Error('Payer not found')
 
-  const splitAmount = amount / sharedWithNames.length
+  const roundedAmount = Math.round(amount * 100) / 100
+  const splitAmount = Math.round((roundedAmount / sharedWithNames.length) * 100) / 100
 
   const { data: shareUsers, error: shareUsersError } = await supabase
     .from('User')
@@ -59,7 +60,7 @@ export async function createExpenseAction(
   // Create the expense first
   const { data: expense, error: expenseError } = await supabase
     .from('Expense')
-    .insert({ name, amount, payerId: payer.id })
+    .insert({ name, amount: roundedAmount, payerId: payer.id })
     .select()
     .single()
 
@@ -259,12 +260,14 @@ export async function topUpPocket(
 
   if (userError || !user) throw new Error('User not found')
 
+  const roundedAmount = Math.round(amount * 100) / 100
+
   // 1. Add to pocket balance
   const { error } = await supabase
     .from('PocketTransaction')
     .insert({
       userId: user.id,
-      amount,
+      amount: roundedAmount,
       description: description || `Top up by ${userName}`,
     })
 
@@ -274,13 +277,13 @@ export async function topUpPocket(
   const expenseName = description || `Pocket top up by ${userName}`
   const { data: expense, error: expenseError } = await supabase
     .from('Expense')
-    .insert({ name: expenseName, amount, payerId: user.id })
+    .insert({ name: expenseName, amount: roundedAmount, payerId: user.id })
     .select()
     .single()
 
   if (expenseError || !expense) throw new Error(`Failed to create expense: ${expenseError?.message}`)
 
-  const splitAmount = amount / listOfPeople.length
+  const splitAmount = Math.round((roundedAmount / listOfPeople.length) * 100) / 100
 
   // Get all people (excluding the person who topped up)
   const { data: shareUsers } = await supabase
@@ -365,14 +368,14 @@ export async function getPersonalSharedBalances() {
     deductions[u.id] = 0
   })
 
-  ;(txs || []).forEach((t) => {
-    if (t.amount < 0 && deductions[t.userId] !== undefined) {
-      deductions[t.userId] += t.amount
-    }
-  })
+    ; (txs || []).forEach((t) => {
+      if (t.amount < 0 && deductions[t.userId] !== undefined) {
+        deductions[t.userId] += t.amount
+      }
+    })
 
   return users.map((u) => ({
     name: u.name,
-    balance: sharePerPerson + (deductions[u.id] || 0),
+    balance: Math.round((sharePerPerson + (deductions[u.id] || 0)) * 100) / 100,
   }))
 }
