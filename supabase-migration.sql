@@ -25,3 +25,12 @@ CREATE TABLE IF NOT EXISTS "ExpenseShare" (
   "isPaid" BOOLEAN DEFAULT FALSE,
   UNIQUE("expenseId", "userId")
 );
+
+-- PocketTransaction table (shared pocket deposits/withdrawals)
+CREATE TABLE IF NOT EXISTS "PocketTransaction" (
+  id SERIAL PRIMARY KEY,
+  "userId" INT NOT NULL REFERENCES "User"(id),
+  amount DOUBLE PRECISION NOT NULL,
+  description TEXT,
+  date TIMESTAMPTZ DEFAULT NOW()
+);

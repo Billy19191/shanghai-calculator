@@ -14,6 +14,9 @@ const listOfPeople = [
   'Billy',
 ]
 
+// All users including special ones (for DB seeding)
+const allUsers = [...listOfPeople, 'Shared-Pocket']
+
 // Ensure database is seeded with users
 export async function seedUsers() {
   const { count } = await supabase
@@ -23,7 +26,7 @@ export async function seedUsers() {
   if (count === 0) {
     const { error } = await supabase
       .from('User')
-      .insert(listOfPeople.map((name) => ({ name })))
+      .insert(allUsers.map((name) => ({ name })))
     if (error) throw new Error(`Failed to seed users: ${error.message}`)
   }
 }
@@ -76,6 +79,19 @@ export async function createExpenseAction(
       .from('ExpenseShare')
       .insert(sharesData)
     if (sharesError) throw new Error(`Failed to create shares: ${sharesError.message}`)
+  }
+
+  // If paid from shared pocket, deduct from pocket balance
+  if (payerName === 'Shared-Pocket') {
+    const { error: pocketError } = await supabase
+      .from('PocketTransaction')
+      .insert({
+        userId: payer.id,
+        amount: -amount,
+        description: `Expense: ${name}`,
+      })
+    if (pocketError) throw new Error(`Failed to deduct from pocket: ${pocketError.message}`)
+    revalidatePath('/')
   }
 
   revalidatePath(`/user/${payerName}/expenses`)
@@ -208,4 +224,106 @@ export async function confirmSharesPaid(shareIds: number[], userName: string) {
   if (error) throw new Error(`Failed to confirm paid: ${error.message}`)
 
   revalidatePath(`/user/${userName}/expenses`)
+}
+
+export async function getSharedPocketBalance() {
+  const { data, error } = await supabase
+    .from('PocketTransaction')
+    .select('amount')
+
+  if (error) return 0
+
+  return (data || []).reduce((sum, row) => sum + row.amount, 0)
+}
+
+export async function topUpPocket(
+  userName: string,
+  amount: number,
+  description: string,
+) {
+  await seedUsers()
+
+  const { data: user, error: userError } = await supabase
+    .from('User')
+    .select('*')
+    .eq('name', userName)
+    .single()
+
+  if (userError || !user) throw new Error('User not found')
+
+  // 1. Add to pocket balance
+  const { error } = await supabase
+    .from('PocketTransaction')
+    .insert({
+      userId: user.id,
+      amount,
+      description: description || `Top up by ${userName}`,
+    })
+
+  if (error) throw new Error(`Failed to top up pocket: ${error.message}`)
+
+  // 2. Create an expense split among all people (so everyone owes the person who topped up)
+  const expenseName = description || `Pocket top up by ${userName}`
+  const { data: expense, error: expenseError } = await supabase
+    .from('Expense')
+    .insert({ name: expenseName, amount, payerId: user.id })
+    .select()
+    .single()
+
+  if (expenseError || !expense) throw new Error(`Failed to create expense: ${expenseError?.message}`)
+
+  const splitAmount = amount / listOfPeople.length
+
+  // Get all people (excluding the person who topped up)
+  const { data: shareUsers } = await supabase
+    .from('User')
+    .select('*')
+    .in('name', listOfPeople)
+
+  const sharesData = (shareUsers || [])
+    .filter((u) => u.name !== userName)
+    .map((u) => ({
+      expenseId: expense.id,
+      userId: u.id,
+      amountOwed: splitAmount,
+    }))
+
+  if (sharesData.length > 0) {
+    const { error: sharesError } = await supabase
+      .from('ExpenseShare')
+      .insert(sharesData)
+    if (sharesError) throw new Error(`Failed to create shares: ${sharesError.message}`)
+  }
+
+  revalidatePath('/')
+  revalidatePath(`/user/Shared-Pocket`)
+  // Revalidate expense pages for all people
+  for (const person of listOfPeople) {
+    revalidatePath(`/user/${person}/expenses`)
+  }
+}
+
+export async function getPocketTransactions() {
+  const { data, error } = await supabase
+    .from('PocketTransaction')
+    .select(`
+      id,
+      amount,
+      description,
+      date,
+      user:User!userId (
+        name
+      )
+    `)
+    .order('date', { ascending: false })
+
+  if (error) return []
+
+  return (data || []).map((t) => ({
+    id: t.id,
+    amount: t.amount,
+    description: t.description,
+    date: t.date,
+    userName: (t.user as unknown as { name: string }).name,
+  }))
 }
