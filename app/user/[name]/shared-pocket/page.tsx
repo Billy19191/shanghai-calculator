@@ -6,6 +6,7 @@ import {
   topUpPocket,
   getSharedPocketBalance,
   getPocketTransactions,
+  getPersonalSharedBalances,
 } from '@/app/actions'
 
 const listOfPeople: string[] = [
@@ -41,10 +42,12 @@ export default function TopUpPocketPage({
   const [isPending, startTransition] = useTransition()
   const [balance, setBalance] = useState<number | null>(null)
   const [transactions, setTransactions] = useState<PocketTransaction[]>([])
+  const [personalBalances, setPersonalBalances] = useState<{ name: string; balance: number }[]>([])
 
   const loadData = () => {
     getSharedPocketBalance().then(setBalance)
     getPocketTransactions().then(setTransactions)
+    getPersonalSharedBalances().then(setPersonalBalances)
   }
 
   useEffect(() => {
@@ -73,7 +76,7 @@ export default function TopUpPocketPage({
       <h1 className="text-3xl font-bold mb-2">Top Up Pocket</h1>
 
       {/* Current Balance */}
-      <div className="w-full border border-gray-200 rounded-lg p-4 mb-8 text-center">
+      <div className="w-full border border-gray-200 rounded-lg p-4 mb-6 text-center">
         <p className="text-sm text-gray-500">Current Balance</p>
         <p
           className={`text-2xl font-bold mt-1 ${balance !== null && balance >= 0 ? 'text-green-500' : 'text-red-500'}`}
@@ -81,6 +84,28 @@ export default function TopUpPocketPage({
           {balance !== null ? `${balance.toLocaleString()} THB` : '...'}
         </p>
       </div>
+
+      {/* Personal Shared Balances */}
+      {personalBalances.length > 0 && (
+        <div className="w-full border border-gray-200 rounded-lg p-4 mb-8">
+          <h2 className="text-sm font-semibold text-gray-500 mb-3 text-center uppercase tracking-wider">
+            Personal Shared Balances
+          </h2>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            {personalBalances.map((pb) => (
+              <div key={pb.name} className="flex justify-between border-b border-gray-50 pb-1">
+                <span className="text-gray-600">{pb.name}</span>
+                <span
+                  className={`font-semibold ${pb.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  {pb.balance >= 0 ? '+' : ''}
+                  {pb.balance.toLocaleString()} THB
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top Up Form */}
       <form

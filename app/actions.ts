@@ -70,12 +70,12 @@ export async function createExpenseAction(
     payerName === 'Shared-Pocket'
       ? []
       : (shareUsers || [])
-          .filter((u) => u.name !== payerName)
-          .map((u) => ({
-            expenseId: expense.id,
-            userId: u.id,
-            amountOwed: splitAmount,
-          }))
+        .filter((u) => u.name !== payerName)
+        .map((u) => ({
+          expenseId: expense.id,
+          userId: u.id,
+          amountOwed: splitAmount,
+        }))
 
   if (sharesData.length > 0) {
     const { error: sharesError } = await supabase
@@ -85,16 +85,20 @@ export async function createExpenseAction(
       throw new Error(`Failed to create shares: ${sharesError.message}`)
   }
 
-  // If paid from shared pocket, deduct from pocket balance
+  // If paid from shared pocket, deduct from pocket balance of people who attend only
   if (payerName === 'Shared-Pocket') {
-    const { error: pocketError } = await supabase
-      .from('PocketTransaction')
-      .insert({
-        userId: payer.id,
-        amount: -amount,
-        description: `Expense: ${name}`,
-      })
-    if (pocketError) throw new Error(`Failed to deduct from pocket: ${pocketError.message}`)
+    const transactionsData = (shareUsers || []).map((u) => ({
+      userId: u.id,
+      amount: -splitAmount,
+      description: `Expense: ${name} (Share)`,
+    }))
+
+    if (transactionsData.length > 0) {
+      const { error: pocketError } = await supabase
+        .from('PocketTransaction')
+        .insert(transactionsData)
+      if (pocketError) throw new Error(`Failed to deduct from pocket: ${pocketError.message}`)
+    }
     revalidatePath('/')
   }
 
@@ -329,5 +333,46 @@ export async function getPocketTransactions() {
     description: t.description,
     date: t.date,
     userName: (t.user as unknown as { name: string }).name,
+  }))
+}
+
+export async function getPersonalSharedBalances() {
+  await seedUsers()
+
+  const { data: users, error: usersError } = await supabase
+    .from('User')
+    .select('*')
+    .in('name', listOfPeople)
+
+  if (usersError || !users) return []
+
+  const { data: txs, error: txsError } = await supabase
+    .from('PocketTransaction')
+    .select('userId, amount')
+
+  if (txsError) return []
+
+  // 1. Calculate total positive top-ups
+  const totalTopUps = (txs || [])
+    .filter((t) => t.amount > 0)
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const sharePerPerson = totalTopUps / listOfPeople.length
+
+  // 2. Calculate deductions (negative pocket transactions) for each user
+  const deductions: Record<number, number> = {}
+  users.forEach((u) => {
+    deductions[u.id] = 0
+  })
+
+  ;(txs || []).forEach((t) => {
+    if (t.amount < 0 && deductions[t.userId] !== undefined) {
+      deductions[t.userId] += t.amount
+    }
+  })
+
+  return users.map((u) => ({
+    name: u.name,
+    balance: sharePerPerson + (deductions[u.id] || 0),
   }))
 }
