@@ -14,7 +14,7 @@ export default function UserMenuPage({
   return (
     <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
       <h1 className="text-3xl font-bold mb-8">
-        Hello, {decodeURIComponent(name)}!
+        {decodeURIComponent(name)}'s Pocket
       </h1>
       <h2 className="text-md mb-4 text-gray-600">What would you like to do?</h2>
 

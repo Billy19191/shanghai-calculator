@@ -33,5 +33,5 @@ body {
 }
 
 .page-transition {
-  animation: fadeIn 0.3s ease-out both;
+  animation: fadeIn 0.2s ease-out both;
 }

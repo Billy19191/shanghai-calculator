@@ -166,7 +166,7 @@ export default function MyWalletTransactionPage({
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending || selectedPeople.length === 0}
+          disabled={isPending || !expenseName.trim() || !amount || selectedPeople.length === 0}
           className="mt-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : 'Submit Expense'}
