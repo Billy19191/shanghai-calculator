@@ -72,7 +72,7 @@ export default function TopUpPocketPage({
   }
 
   return (
-    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-5 max-w-md mx-auto w-full">
+    <div className="page-transition flex flex-col items-center justify-center min-h-dvh py-10 px-5 max-w-md mx-auto w-full">
       <h1 className="text-3xl font-bold mb-2">Top Up Pocket</h1>
 
       {/* Current Balance */}

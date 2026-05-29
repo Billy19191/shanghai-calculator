@@ -12,7 +12,7 @@ export default function UserMenuPage({
   const { name } = use(params)
 
   return (
-    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
+    <div className="page-transition flex flex-col items-center justify-center min-h-dvh py-10 px-20 my-5">
       <h1 className="text-3xl font-bold mb-8">
         {decodeURIComponent(name)}'s Pocket
       </h1>

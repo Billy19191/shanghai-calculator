@@ -23,7 +23,7 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-5 text-center">
+    <div className="page-transition flex flex-col items-center justify-center min-h-dvh py-10 px-5 text-center">
       <div className="text-6xl mb-4">🇨🇳</div>
       <div className="text-3xl font-bold mb-1">Shanghai Calculator</div>
       <p className="text-sm text-gray-400 mb-10">By Billy</p>

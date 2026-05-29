@@ -82,7 +82,7 @@ export default function MyWalletTransactionPage({
       : null
 
   return (
-    <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-5 my-5 max-w-lg mx-auto w-full">
+    <div className="page-transition flex flex-col items-center justify-center min-h-dvh py-10 px-5 my-5 max-w-lg mx-auto w-full">
       <h1 className="text-3xl font-bold mb-2">Add New Expense</h1>
       <h2 className="text-md mb-8 text-gray-600">
         Paying from {decodeURIComponent(name)}&apos;s wallet
