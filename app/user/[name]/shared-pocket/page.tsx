@@ -99,8 +99,8 @@ export default function TopUpPocketPage({
                   type="button"
                   onClick={() => setSelectedPerson(person)}
                   className={`px-4 py-1 rounded-full border transition-colors ${isSelected
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
                     }`}
                 >
                   {person}

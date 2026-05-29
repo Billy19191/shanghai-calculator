@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getSharedPocketBalance } from '@/app/actions'
 
 const listOfPeople: string[] = [
@@ -16,7 +16,6 @@ const listOfPeople: string[] = [
 ]
 
 export default function Home() {
-  const router = useRouter()
   const [pocketBalance, setPocketBalance] = useState<number | null>(null)
 
   useEffect(() => {
@@ -33,28 +32,29 @@ export default function Home() {
 
       <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
         {listOfPeople.map((person) => (
-          <button
+          <Link
             key={person}
-            onClick={() => router.push(`/user/${person}`)}
-            className="border border-gray-300 rounded-lg py-3 px-4 text-center font-medium hover:bg-gray-100 active:scale-95 cursor-pointer transition-all"
+            href={`/user/${person}`}
+            className="border border-gray-300 rounded-lg py-3 px-4 text-center font-medium hover:bg-gray-100 active:scale-95 cursor-pointer transition-all block"
           >
             {person}
-          </button>
+          </Link>
         ))}
 
         <div className="col-span-2 mt-4 border-t border-dotted border-gray-300" />
 
-        <button
-          onClick={() => router.push(`/user/Shared-Pocket`)}
-          className="col-span-2 mt-4 border border-gray-300 rounded-lg py-3 px-4 text-center font-medium hover:bg-gray-100 active:scale-95 cursor-pointer transition-all"
+        <Link
+          href="/user/Shared-Pocket"
+          className="col-span-2 mt-4 border border-gray-300 rounded-lg py-3 px-4 text-center font-medium hover:bg-gray-100 active:scale-95 cursor-pointer transition-all block"
         >
           <span>Shared Pocket</span>
           <span className={`block text-sm mt-1 ${pocketBalance !== null && pocketBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {pocketBalance !== null ? `${pocketBalance.toLocaleString()} THB` : '...'}
           </span>
-        </button>
+        </Link>
       </div>
 
     </div>
   )
 }
+

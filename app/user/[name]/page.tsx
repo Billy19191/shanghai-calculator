@@ -2,16 +2,14 @@
 
 import { use } from 'react'
 import Card from '@/app/components/card'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function UserMenuPage({
   params,
 }: {
   params: Promise<{ name: string }>
 }) {
-  const router = useRouter()
   const { name } = use(params)
-
 
   return (
     <div className="page-transition flex flex-col items-center justify-center min-h-screen py-10 px-20 my-5">
@@ -22,25 +20,26 @@ export default function UserMenuPage({
 
       <Card
         name="Add expense transaction"
-        onClick={() => router.push(`/user/${name}/add-transaction`)}
+        href={`/user/${name}/add-transaction`}
       />
       <Card
         name="View my expense"
-        onClick={() => router.push(`/user/${name}/expenses`)}
+        href={`/user/${name}/expenses`}
       />
       {name == 'Shared-Pocket' && (
         <Card
           name="Top up pocket"
-          onClick={() => router.push(`/user/${name}/shared-pocket`)}
+          href={`/user/${name}/shared-pocket`}
         />
       )}
 
-      <button
-        className="mt-8 text-blue-500 hover:underline"
-        onClick={() => router.push('/')}
+      <Link
+        className="mt-8 text-blue-500 hover:underline block"
+        href="/"
       >
         Go back
-      </button>
+      </Link>
     </div>
   )
 }
+
