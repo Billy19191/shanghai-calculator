@@ -65,20 +65,24 @@ export async function createExpenseAction(
 
   if (expenseError || !expense) throw new Error(`Failed to create expense: ${expenseError?.message}`)
 
-  // People only owe the payer if they aren't the payer
-  const sharesData = (shareUsers || [])
-    .filter((u) => u.name !== payerName)
-    .map((u) => ({
-      expenseId: expense.id,
-      userId: u.id,
-      amountOwed: splitAmount,
-    }))
+  // People only owe the payer if they aren't the payer (and if it is not paid by Shared-Pocket)
+  const sharesData =
+    payerName === 'Shared-Pocket'
+      ? []
+      : (shareUsers || [])
+          .filter((u) => u.name !== payerName)
+          .map((u) => ({
+            expenseId: expense.id,
+            userId: u.id,
+            amountOwed: splitAmount,
+          }))
 
   if (sharesData.length > 0) {
     const { error: sharesError } = await supabase
       .from('ExpenseShare')
       .insert(sharesData)
-    if (sharesError) throw new Error(`Failed to create shares: ${sharesError.message}`)
+    if (sharesError)
+      throw new Error(`Failed to create shares: ${sharesError.message}`)
   }
 
   // If paid from shared pocket, deduct from pocket balance

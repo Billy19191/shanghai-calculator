@@ -22,6 +22,7 @@ export default function MyWalletTransactionPage({
 }) {
   const router = useRouter()
   const { name } = use(params)
+  const isSharedPocket = decodeURIComponent(name) === 'Shared-Pocket'
 
   const [expenseName, setExpenseName] = useState('')
   const [amount, setAmount] = useState('')
@@ -55,12 +56,18 @@ export default function MyWalletTransactionPage({
           decodedName,
           expenseName,
           parseFloat(amount),
-          selectedPeople,
+          isSharedPocket ? [] : selectedPeople,
         )
 
-        alert(
-          `Expense "${expenseName}" added! Shared among ${selectedPeople.length} people.`,
-        )
+        if (isSharedPocket) {
+          alert(
+            `Expense "${expenseName}" added and deducted from Shared Pocket balance.`,
+          )
+        } else {
+          alert(
+            `Expense "${expenseName}" added! Shared among ${selectedPeople.length} people.`,
+          )
+        }
         router.push(`/user/${name}`)
       } catch (err) {
         console.error(err)
@@ -70,7 +77,7 @@ export default function MyWalletTransactionPage({
   }
 
   const perPerson =
-    selectedPeople.length > 0 && amount
+    !isSharedPocket && selectedPeople.length > 0 && amount
       ? (parseFloat(amount) / selectedPeople.length).toFixed(2)
       : null
 
@@ -118,40 +125,42 @@ export default function MyWalletTransactionPage({
         </div>
 
         {/* People Selector */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <label className="font-semibold text-lg">
-              Select people to share with
-            </label>
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="text-sm text-blue-500 hover:underline"
-            >
-              {selectedPeople.length === listOfPeople.length
-                ? 'Deselect all'
-                : 'Select all'}
-            </button>
+        {!isSharedPocket && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-lg">
+                Select people to share with
+              </label>
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className="text-sm text-blue-500 hover:underline"
+              >
+                {selectedPeople.length === listOfPeople.length
+                  ? 'Deselect all'
+                  : 'Select all'}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {listOfPeople.map((person) => {
+                const isSelected = selectedPeople.includes(person)
+                return (
+                  <button
+                    key={person}
+                    type="button"
+                    onClick={() => handlePersonToggle(person)}
+                    className={`px-4 py-1 rounded-full border transition-colors ${isSelected
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                      }`}
+                  >
+                    {person}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {listOfPeople.map((person) => {
-              const isSelected = selectedPeople.includes(person)
-              return (
-                <button
-                  key={person}
-                  type="button"
-                  onClick={() => handlePersonToggle(person)}
-                  className={`px-4 py-1 rounded-full border transition-colors ${isSelected
-                    ? 'bg-black text-white border-black'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                    }`}
-                >
-                  {person}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        )}
 
         {/* Per-person summary */}
         {perPerson && (
@@ -166,7 +175,7 @@ export default function MyWalletTransactionPage({
         {/* Submit */}
         <button
           type="submit"
-          disabled={isPending || !expenseName.trim() || !amount || selectedPeople.length === 0}
+          disabled={isPending || !expenseName.trim() || !amount || (!isSharedPocket && selectedPeople.length === 0)}
           className="mt-2 bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : 'Submit Expense'}
